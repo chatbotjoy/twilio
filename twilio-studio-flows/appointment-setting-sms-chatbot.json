@@ -1,0 +1,688 @@
+{
+  "description": "Appointment Setting SMS Chatbot",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "next": "ask_service_date",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "incomingCall"
+        },
+        {
+          "event": "incomingConversationMessage"
+        },
+        {
+          "event": "incomingRequest"
+        },
+        {
+          "event": "incomingParent"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "name": "ask_service_date",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "extract_date",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 110,
+          "y": 220
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Hello! I'm here to help you set up an appointment for a plumbing service estimate. When would you like to schedule your appointment?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "ask_time",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "extract_time",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 680,
+          "y": 480
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Ok let me see if we have availability on {{flow.variables.friendlyDate}}. Would you prefer morning or afternoon?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "send_confirmation_1",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 50,
+          "y": 1450
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "Thanks, John. I've got your request to schedule a a plumbing estimate on {{widgets.extract_date.parsed.friendlyDate}} at {{widgets.extract_date.parsed.time}}. We'll give you a call to confirm the appointment and provide you with an estimate."
+      }
+    },
+    {
+      "name": "extract_date",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "set_variables_1",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "service_sid": "ZS4dbe705f8ae364701e2c3768b8be35b9",
+        "environment_sid": "ZE8bea03b868a13d09d8c2e7ddfcd1cdd6",
+        "offset": {
+          "x": 30,
+          "y": 620
+        },
+        "function_sid": "ZHfca41616ab4a600462fd0a5c006de919",
+        "parameters": [
+          {
+            "value": "{{widgets.ask_service_date.inbound.Body}}",
+            "key": "Body"
+          }
+        ],
+        "url": "https://templates-2332-dev.twil.io/extract-dates"
+      }
+    },
+    {
+      "name": "check_time",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "send_confirmation_1",
+          "event": "noMatch"
+        },
+        {
+          "next": "ask_time",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to 0",
+              "arguments": [
+                "{{flow.variables.hour}}"
+              ],
+              "type": "equal_to",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "next": "ask_service_date_2",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to Unknown",
+              "arguments": [
+                "{{flow.variables.hour}}"
+              ],
+              "type": "equal_to",
+              "value": "Unknown"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{flow.variables.hour}}",
+        "offset": {
+          "x": 10,
+          "y": 1180
+        }
+      }
+    },
+    {
+      "name": "split_confirm_time",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "ask_time_again",
+          "event": "noMatch"
+        },
+        {
+          "next": "ask_name",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to morning",
+              "arguments": [
+                "{{flow.variables.time}}"
+              ],
+              "type": "equal_to",
+              "value": "morning"
+            }
+          ]
+        },
+        {
+          "next": "ask_name",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to afternoon",
+              "arguments": [
+                "{{flow.variables.time}}"
+              ],
+              "type": "equal_to",
+              "value": "afternoon"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{flow.variables.time}}",
+        "offset": {
+          "x": 760,
+          "y": 1310
+        }
+      }
+    },
+    {
+      "name": "send_confirmation_2",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 830,
+          "y": 2660
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "Thanks, {{flow.variables.first_name}}. I've got your request to schedule a plumbing estimate on {{flow.variables.friendlyDate}} in the {{flow.variables.time}}. We'll give you a call to confirm the appointment and provide you with an estimate."
+      }
+    },
+    {
+      "name": "set_morning_or_afternoon",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "split_confirm_time",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{widgets.extract_time.parsed.result}}",
+            "key": "time"
+          }
+        ],
+        "offset": {
+          "x": 840,
+          "y": 1060
+        }
+      }
+    },
+    {
+      "name": "ask_time_again",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "extract_time_2",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 1100,
+          "y": 480
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Sorry I didn't get that. Would you prefer morning or afternoon?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "extract_time",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "set_morning_or_afternoon",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "service_sid": "ZS4dbe705f8ae364701e2c3768b8be35b9",
+        "environment_sid": "ZE8bea03b868a13d09d8c2e7ddfcd1cdd6",
+        "offset": {
+          "x": 790,
+          "y": 780
+        },
+        "function_sid": "ZH142633cd2a8fbbcccd924b451e36332d",
+        "parameters": [
+          {
+            "value": "{{widgets.ask_time.inbound.Body}}",
+            "key": "Body"
+          }
+        ],
+        "url": "https://templates-2332-dev.twil.io/extract-time"
+      }
+    },
+    {
+      "name": "extract_time_2",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "Copy_of_set_morning_or_afternoon",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "service_sid": "ZS4dbe705f8ae364701e2c3768b8be35b9",
+        "environment_sid": "ZE8bea03b868a13d09d8c2e7ddfcd1cdd6",
+        "offset": {
+          "x": 1150,
+          "y": 780
+        },
+        "function_sid": "ZH142633cd2a8fbbcccd924b451e36332d",
+        "parameters": [
+          {
+            "value": "{{widgets.ask_time_again.inbound.Body}}",
+            "key": "Body"
+          }
+        ],
+        "url": "https://templates-2332-dev.twil.io/extract-time"
+      }
+    },
+    {
+      "name": "Copy_of_set_morning_or_afternoon",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "split_confirm_time",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{widgets.extract_time_2.parsed.result}}",
+            "key": "time"
+          }
+        ],
+        "offset": {
+          "x": 1190,
+          "y": 1060
+        }
+      }
+    },
+    {
+      "name": "ask_name",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "extract_name",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 870,
+          "y": 1640
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Great! Can I get your full name to confirm the appointment?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "extract_name",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "set_name",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "service_sid": "ZS4dbe705f8ae364701e2c3768b8be35b9",
+        "environment_sid": "ZE8bea03b868a13d09d8c2e7ddfcd1cdd6",
+        "offset": {
+          "x": 850,
+          "y": 1900
+        },
+        "function_sid": "ZHd942a430162b8684e266c7f8702fbd02",
+        "parameters": [
+          {
+            "value": "{{widgets.ask_name.inbound.Body}}",
+            "key": "Body"
+          }
+        ],
+        "url": "https://templates-2332-dev.twil.io/extract-name"
+      }
+    },
+    {
+      "name": "split_1",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "send_confirmation_2",
+          "event": "noMatch"
+        },
+        {
+          "next": "ask_name_2",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to Unknown",
+              "arguments": [
+                "{{flow.variables.first_name}}"
+              ],
+              "type": "equal_to",
+              "value": "Unknown"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{flow.variables.first_name}}",
+        "offset": {
+          "x": 850,
+          "y": 2400
+        }
+      }
+    },
+    {
+      "name": "set_name",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "split_1",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{widgets.extract_name.parsed.first_name}}",
+            "key": "first_name"
+          },
+          {
+            "value": "{{widgets.extract_name.parsed.last_name}}",
+            "key": "last_name"
+          }
+        ],
+        "offset": {
+          "x": 830,
+          "y": 2150
+        }
+      }
+    },
+    {
+      "name": "ask_name_2",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "extract_name_2",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 1230,
+          "y": 1630
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Sorry, I didn't get that. Can I get your full name to confirm the appointment?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "extract_name_2",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "set_name_2",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "service_sid": "ZS4dbe705f8ae364701e2c3768b8be35b9",
+        "environment_sid": "ZE8bea03b868a13d09d8c2e7ddfcd1cdd6",
+        "offset": {
+          "x": 1220,
+          "y": 1910
+        },
+        "function_sid": "ZHd942a430162b8684e266c7f8702fbd02",
+        "parameters": [
+          {
+            "value": "{{widgets.ask_name_2.inbound.Body}}",
+            "key": "Body"
+          }
+        ],
+        "url": "https://templates-2332-dev.twil.io/extract-name"
+      }
+    },
+    {
+      "name": "set_name_2",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "split_1",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{widgets.extract_name_2.parsed.first_name}}",
+            "key": "first_name"
+          },
+          {
+            "value": "{{widgets.extract_name_2.parsed.last_name}}",
+            "key": "last_name"
+          }
+        ],
+        "offset": {
+          "x": 1230,
+          "y": 2150
+        }
+      }
+    },
+    {
+      "name": "ask_service_date_2",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "extract_date_2",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 450,
+          "y": 220
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Sorry I didn't get that. When would you like to schedule your appointment?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "extract_date_2",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "Copy_of_set_variables_1",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "service_sid": "ZS4dbe705f8ae364701e2c3768b8be35b9",
+        "environment_sid": "ZE8bea03b868a13d09d8c2e7ddfcd1cdd6",
+        "offset": {
+          "x": 350,
+          "y": 620
+        },
+        "function_sid": "ZHfca41616ab4a600462fd0a5c006de919",
+        "parameters": [
+          {
+            "value": "{{widgets.ask_service_date_2.inbound.Body}}",
+            "key": "Body"
+          }
+        ],
+        "url": "https://templates-2332-dev.twil.io/extract-dates"
+      }
+    },
+    {
+      "name": "set_variables_1",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "check_time",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{widgets.extract_date.parsed.hour}}",
+            "key": "hour"
+          },
+          {
+            "value": "{{widgets.extract_date.parsed.friendlyDate}}",
+            "key": "friendlyDate"
+          }
+        ],
+        "offset": {
+          "x": 30,
+          "y": 920
+        }
+      }
+    },
+    {
+      "name": "Copy_of_set_variables_1",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "check_time",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{widgets.extract_date_2.parsed.hour}}",
+            "key": "hour"
+          },
+          {
+            "value": "{{widgets.extract_date_2.parsed.friendlyDate}}",
+            "key": "friendlyDate"
+          }
+        ],
+        "offset": {
+          "x": 350,
+          "y": 920
+        }
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}
