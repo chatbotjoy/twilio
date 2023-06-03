@@ -1,0 +1,293 @@
+{
+  "description": "Real Estate SMS Chatbot for Lead Generation",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "next": "ask_property_type",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "incomingCall"
+        },
+        {
+          "event": "incomingConversationMessage"
+        },
+        {
+          "event": "incomingRequest"
+        },
+        {
+          "event": "incomingParent"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "name": "ask_property_type",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "ask_city",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 30,
+          "y": 220
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "I'm here to help you find the perfect property. Let's get started! What type of property are you looking for?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "ask_city",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "ask_neighborhood_and_amenities",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 30,
+          "y": 430
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Great! In which area or city are you looking to buy a house?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "ask_budget",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "ask_contact_info",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 50,
+          "y": 910
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Wonderful! To better assist you, could you please provide your budget range for the house?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "ask_contact_info",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "extract_lead_info",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 50,
+          "y": 1130
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Thank you for providing that information. Lastly, may I have your contact information so that our real estate agent can reach out to you with suitable options?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "extract_lead_info",
+      "type": "run-function",
+      "transitions": [
+        {
+          "next": "send_confirmation",
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "service_sid": "ZS4dbe705f8ae364701e2c3768b8be35b9",
+        "environment_sid": "ZE8bea03b868a13d09d8c2e7ddfcd1cdd6",
+        "offset": {
+          "x": 60,
+          "y": 1390
+        },
+        "function_sid": "ZH1fd08a414fe5a7170c376ed0e4339b9b",
+        "parameters": [
+          {
+            "value": "{{widgets.ask_property_type.inbound.Body}}",
+            "key": "property_type"
+          },
+          {
+            "value": "{{widgets.ask_city.inbound.Body}}",
+            "key": "city"
+          },
+          {
+            "value": "{{widgets.ask_neighborhood_and_amenities.inbound.Body}}",
+            "key": "amenities"
+          },
+          {
+            "value": "{{widgets.ask_budget.inbound.Body}}",
+            "key": "budget"
+          },
+          {
+            "value": "{{widgets.ask_contact_info.inbound.Body}}",
+            "key": "contact"
+          }
+        ],
+        "url": "https://templates-2332-dev.twil.io/extract-lead-info"
+      }
+    },
+    {
+      "name": "ask_neighborhood_and_amenities",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "ask_budget",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 30,
+          "y": 670
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Are there any specific neighborhoods or amenities you prefer?",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "send_confirmation",
+      "type": "send-message",
+      "transitions": [
+        {
+          "next": "airtable",
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 50,
+          "y": 1650
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "Thank you, {{widgets.extract_lead_info.parsed.name}}! Our real estate agent will be in touch with you soon to discuss available properties that match your criteria. If you have any additional questions, feel free to ask."
+      }
+    },
+    {
+      "name": "airtable",
+      "type": "run-function",
+      "transitions": [
+        {
+          "event": "success"
+        },
+        {
+          "event": "fail"
+        }
+      ],
+      "properties": {
+        "service_sid": "ZS4dbe705f8ae364701e2c3768b8be35b9",
+        "environment_sid": "ZE8bea03b868a13d09d8c2e7ddfcd1cdd6",
+        "offset": {
+          "x": 60,
+          "y": 1900
+        },
+        "function_sid": "ZHfe4b7e1e45f5a395f9880cf577e91cb8",
+        "parameters": [
+          {
+            "value": "{{widgets.extract_lead_info.parsed.name}}",
+            "key": "name"
+          },
+          {
+            "value": "{{widgets.extract_lead_info.parsed.email}}",
+            "key": "email"
+          },
+          {
+            "value": "{{widgets.extract_lead_info.parsed.phone}}",
+            "key": "phone"
+          },
+          {
+            "value": "{{widgets.extract_lead_info.parsed.property_type}}",
+            "key": "property_type"
+          },
+          {
+            "value": "{{widgets.extract_lead_info.parsed.city}}",
+            "key": "city"
+          },
+          {
+            "value": "{{widgets.extract_lead_info.parsed.amenities}}",
+            "key": "amenities"
+          },
+          {
+            "value": "{{widgets.extract_lead_info.parsed.budget}}",
+            "key": "budget"
+          }
+        ],
+        "url": "https://templates-2332-dev.twil.io/sms-to-airtable"
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}
